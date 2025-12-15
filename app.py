@@ -238,7 +238,7 @@ HTML_TEMPLATE = """
 
         <div class="card-header-custom">
             <div class="app-title">SEWING<span style="color:var(--accent)">INPUT</span></div>
-            <div class="app-status"><div class="status-dot"></div> System Active</div>
+            <div class="app-status"><div class="status-dot"></div> MNM Software </div>
         </div>
 
         <div class="card-body-custom">
@@ -248,7 +248,7 @@ HTML_TEMPLATE = """
                 </div>
                 
                 <button type="submit" class="btn-action">
-                    Execute Input <i class="fa-solid fa-bolt ms-2"></i>
+                    Input Submit <i class="fa-solid fa-bolt ms-2"></i>
                 </button>
             </form>
 
@@ -261,10 +261,10 @@ HTML_TEMPLATE = """
 
                 <div class="btn-grid">
                     <a href="#" id="link1" target="_blank" class="btn-outline">
-                        <i class="fa-solid fa-list"></i> Bundle List
+                        <i class="fa-solid fa-list"></i> Call List Print
                     </a>
                     <a href="#" id="link2" target="_blank" class="btn-outline">
-                        <i class="fa-solid fa-file-invoice"></i> Challan View
+                        <i class="fa-solid fa-file-invoice"></i> Challan Print
                     </a>
                 </div>
 
@@ -283,7 +283,7 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="footer">
-                SECURE SERVER CONNECTION v5.0
+                SECURE SERVER CONNECTION v2.0
             </div>
         </div>
     </div>
@@ -492,4 +492,5 @@ def process():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
+
 
