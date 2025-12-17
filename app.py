@@ -9,7 +9,7 @@ from urllib3.util.retry import Retry
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- PREMIUM GLASS DARK UI TEMPLATE ---
+# --- MNM SOFTWARE DESIGN (BASED ON Dgn.py) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -17,299 +17,347 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sewing Input Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
         :root {
-            --bg-dark: #09090b;
-            --glass-bg: rgba(23, 23, 23, 0.85);
+            --bg-body: #0a0a0f;
+            --bg-card: #16161f;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8b8b9e;
+            --accent-orange: #FF7A00;
+            --accent-orange-glow: rgba(255, 122, 0, 0.3);
+            --accent-purple: #8B5CF6;
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
             --border-color: rgba(255, 255, 255, 0.08);
-            --primary: #3b82f6;      /* Modern Blue */
-            --accent: #06b6d4;       /* Cyan */
-            --success: #10b981;      /* Emerald Green */
-            --danger: #ef4444;       /* Red */
-            --text-main: #ffffff;
-            --text-muted: #a1a1aa;
+            --gradient-orange: linear-gradient(135deg, #FF7A00 0%, #FF9A40 100%);
+            --gradient-card: linear-gradient(145deg, rgba(22, 22, 31, 0.9) 0%, rgba(16, 16, 22, 0.95) 100%);
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: 'Inter', sans-serif; 
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%), 
-                radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.08), transparent 25%);
+            background: var(--bg-body);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
-            align-items: center;
             justify-content: center;
-            margin: 0;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background Orbs (From Dgn.py) */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: orbFloat 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .orb-1 { width: 300px; height: 300px; background: var(--accent-orange); top: -100px; left: -100px; animation-delay: 0s; }
+        .orb-2 { width: 250px; height: 250px; background: var(--accent-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
+        .orb-3 { width: 150px; height: 150px; background: var(--accent-green); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+        
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(15px, 30px) scale(1.02); }
+        }
+
+        /* Main Card Container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
             padding: 20px;
         }
 
-        /* Main Card - Glassmorphism */
         .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: var(--gradient-card);
             border: 1px solid var(--border-color);
             border-radius: 24px;
-            width: 100%;
-            max-width: 400px;
-            padding: 40px 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            padding: 40px 35px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px var(--accent-orange-glow);
+            animation: cardAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
 
-        /* Glowing Top Line */
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        .header-section {
-            text-align: center;
-            margin-bottom: 35px;
-        }
-
-        .app-title {
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 700;
-            font-size: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0;
-        }
+        /* Header Styling */
+        .brand-section { text-align: center; margin-bottom: 35px; }
         
-        .app-subtitle {
-            font-size: 0.8rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-top: 5px;
-            font-weight: 600;
+        .brand-icon {
+            width: 70px; height: 70px;
+            background: var(--gradient-orange);
+            border-radius: 18px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 32px; color: white;
+            margin-bottom: 18px;
+            box-shadow: 0 15px 40px var(--accent-orange-glow);
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 15px 40px var(--accent-orange-glow); }
+            50% { transform: scale(1.05); box-shadow: 0 20px 50px var(--accent-orange-glow); }
+        }
+
+        .brand-title { font-size: 26px; font-weight: 900; color: white; letter-spacing: -0.5px; }
+        .brand-title span { 
+            background: var(--gradient-orange); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        }
+        .brand-subtitle { 
+            color: var(--text-secondary); font-size: 11px; letter-spacing: 2px; 
+            margin-top: 6px; font-weight: 600; text-transform: uppercase; 
         }
 
         /* Input Styling */
-        .input-group-custom {
-            position: relative;
-            margin-bottom: 25px;
-        }
-
+        .input-group-custom { margin-bottom: 25px; position: relative; }
+        
         .form-control-custom {
             width: 100%;
+            padding: 18px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 18px;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.6rem;
+            color: white;
+            font-size: 18px;
             font-weight: 700;
-            color: var(--text-main);
             text-align: center;
             letter-spacing: 2px;
-            transition: all 0.3s ease;
+            transition: var(--transition-smooth);
             outline: none;
         }
 
         .form-control-custom:focus {
-            border-color: var(--primary);
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-orange);
+            background: rgba(255, 122, 0, 0.05);
+            box-shadow: 0 0 0 4px var(--accent-orange-glow);
         }
 
-        .btn-submit {
+        /* Button Styling */
+        .btn-action {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+            background: var(--gradient-orange);
+            color: white;
             border: none;
             border-radius: 16px;
-            color: white;
-            font-weight: 600;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-weight: 700;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Rajdhani', sans-serif;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+        .btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px var(--accent-orange-glow);
         }
 
-        /* Result Area */
+        /* Result Box Styling */
         .result-box {
             display: none;
             margin-top: 30px;
-            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: slideUp 0.5s ease-out;
         }
-
-        .status-icon { font-size: 2.5rem; margin-bottom: 15px; display: block; text-align: center; }
-        .text-success-custom { color: var(--success); }
-        .text-error-custom { color: var(--danger); }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .info-card {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 16px;
+            padding: 20px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        .challan-text { font-family: 'Rajdhani'; font-size: 1.2rem; font-weight: 700; color: #fff; }
-        .sys-text { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        .challan-text { font-size: 22px; font-weight: 800; color: white; margin-bottom: 5px; }
+        .sys-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
 
-        /* Button Grid (Side by Side) */
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .status-icon-success {
+            font-size: 40px; color: var(--accent-green); margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));
         }
+
+        /* Action Buttons */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
         .btn-outline {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.15);
-            color: var(--text-main);
-            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 15px;
             border-radius: 12px;
-            font-size: 0.85rem;
+            font-size: 13px;
             text-decoration: none;
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-            transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            transition: var(--transition-smooth);
+            font-weight: 600;
         }
 
         .btn-outline:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: var(--text-main);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--text-primary);
             color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline i { font-size: 18px; color: var(--accent-orange); margin-bottom: 2px; }
+
+        /* Error Box */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #F87171;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 10px; justify-content: center;
+            margin-bottom: 15px;
         }
 
-        /* Loader */
-        .loader-overlay {
+        /* Loader Overlay (Matches Dgn.py) */
+        #loading-overlay {
+            display: none;
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(9, 9, 11, 0.9); backdrop-filter: blur(5px);
-            z-index: 50; display: none; flex-direction: column;
-            align-items: center; justify-content: center;
+            background: rgba(22, 22, 31, 0.9);
+            z-index: 100;
+            flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+            border-radius: 24px;
         }
 
         .spinner {
-            width: 45px; height: 45px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: var(--primary);
+            width: 50px; height: 50px;
+            border: 4px solid rgba(255, 122, 0, 0.1);
+            border-top: 4px solid var(--accent-orange);
+            border-right: 4px solid var(--accent-orange);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
+            box-shadow: 0 0 20px var(--accent-orange-glow);
         }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Footer */
-        .footer {
-            margin-top: 40px;
+        .footer-credit {
             text-align: center;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
-        }
-
-        .dev-text {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            opacity: 0.6;
+            font-weight: 500;
             letter-spacing: 0.5px;
         }
-
-        .dev-name {
-            display: block;
-            margin-top: 4px;
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 700;
-            font-size: 0.9rem;
-            background: linear-gradient(90deg, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .dev-name { color: var(--accent-orange); font-weight: 700; text-transform: uppercase; }
 
     </style>
 </head>
 <body>
 
-    <div class="glass-card">
-        
-        <div class="loader-overlay" id="loader">
-            <div class="spinner"></div>
-            <div style="margin-top: 15px; font-family:'Rajdhani'; letter-spacing: 1px; color: var(--text-muted);">PROCESSING</div>
-        </div>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
 
-        <div class="header-section">
-            <h1 class="app-title">SEWING INPUT</h1>
-            <div class="app-subtitle">Production System</div>
-        </div>
-
-        <form id="mainForm">
-            <div class="input-group-custom">
-                <input type="number" inputmode="numeric" id="challanNo" class="form-control-custom" placeholder="ENTER CHALLAN" required autocomplete="off">
-            </div>
+    <div class="main-container">
+        <div class="glass-card">
             
-            <button type="submit" class="btn-submit">
-                SUBMIT DATA <i class="fa-solid fa-arrow-right ms-2"></i>
-            </button>
-        </form>
-
-        <div id="successBox" class="result-box">
-            <div class="status-icon text-success-custom"><i class="fa-regular fa-circle-check"></i></div>
-            
-            <div class="info-card">
-                <div class="challan-text" id="successChallan">---</div>
-                <div class="sys-text" id="sysId">---</div>
+            <div id="loading-overlay">
+                <div class="spinner"></div>
+                <div style="margin-top: 15px; font-weight: 600; color: var(--accent-orange); letter-spacing: 1px;">PROCESSING...</div>
             </div>
 
-            <div class="btn-grid">
-                <a href="#" id="link1" target="_blank" class="btn-outline">
-                    <i class="fa-solid fa-print text-primary"></i> 
-                    <span>Call List Print</span>
-                </a>
-                <a href="#" id="link2" target="_blank" class="btn-outline">
-                    <i class="fa-solid fa-file-invoice text-info"></i> 
-                    <span>Challan Print</span>
-                </a>
+            <div class="brand-section">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="brand-title">SEWING<span>INPUT</span></div>
+                <div class="brand-subtitle">MNM Production System</div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="#" onclick="resetUI()" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">
-                    <i class="fa-solid fa-rotate-right me-1"></i> Input New Challan
-                </a>
+            <form id="mainForm">
+                <div class="input-group-custom">
+                    <input type="number" inputmode="numeric" id="challanNo" class="form-control-custom" placeholder="ENTER CHALLAN NO" required autocomplete="off">
+                </div>
+                
+                <button type="submit" class="btn-action">
+                    Submit Data <i class="fa-solid fa-arrow-right ms-2"></i>
+                </button>
+            </form>
+
+            <div id="successBox" class="result-box">
+                <div style="text-align: center;">
+                    <i class="fa-solid fa-circle-check status-icon-success"></i>
+                </div>
+                
+                <div class="info-card">
+                    <div class="challan-text" id="successChallan">---</div>
+                    <div class="sys-text" id="sysId">---</div>
+                </div>
+
+                <div class="btn-grid">
+                    <a href="#" id="link1" target="_blank" class="btn-outline">
+                        <i class="fa-solid fa-print"></i> Call List
+                    </a>
+                    <a href="#" id="link2" target="_blank" class="btn-outline">
+                        <i class="fa-solid fa-file-invoice"></i> Challan
+                    </a>
+                </div>
+
+                <div style="text-align: center; margin-top: 25px;">
+                    <a href="#" onclick="resetUI()" style="color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500;">
+                        <i class="fa-solid fa-rotate-right me-1"></i> Input Another
+                    </a>
+                </div>
             </div>
+
+            <div id="errorBox" class="result-box">
+                <div class="error-message">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="errorMsg">Unknown Error</span>
+                </div>
+                <button onclick="resetUI()" class="btn-outline w-100" style="color: var(--accent-red); border-color: rgba(239, 68, 68, 0.3);">
+                    Try Again
+                </button>
+            </div>
+
+            <div class="footer-credit">
+                System Developed By <span class="dev-name">Mehedi Hasan</span>
+            </div>
+
         </div>
-
-        <div id="errorBox" class="result-box">
-            <div class="status-icon text-error-custom"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <div class="info-card" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);">
-                <div style="color: #fca5a5; font-weight: 500;" id="errorMsg">Unknown Error</div>
-            </div>
-            <button onclick="resetUI()" class="btn-outline w-100" style="border-color: var(--danger); color: var(--danger);">TRY AGAIN</button>
-        </div>
-
-        <div class="footer">
-            <div class="dev-text">System Developed & Maintained By</div>
-            <div class="dev-name">MEHEDI HASAN</div>
-        </div>
-
     </div>
 
     <script>
         const form = document.getElementById('mainForm');
         const input = document.getElementById('challanNo');
-        const loader = document.getElementById('loader');
+        const loader = document.getElementById('loading-overlay');
         const successBox = document.getElementById('successBox');
         const errorBox = document.getElementById('errorBox');
 
@@ -334,11 +382,11 @@ HTML_TEMPLATE = """
                 loader.style.display = 'none';
 
                 if(res.status === 'success') {
-                    // Data Display
+                    // Update Info
                     document.getElementById('successChallan').innerText = res.challan_no;
                     document.getElementById('sysId').innerText = "SYS ID: " + res.system_id;
                     
-                    // Links
+                    // Update Links
                     document.getElementById('link1').href = res.report1_url;
                     document.getElementById('link2').href = res.report2_url;
                     
@@ -350,7 +398,7 @@ HTML_TEMPLATE = """
 
             } catch (err) {
                 loader.style.display = 'none';
-                document.getElementById('errorMsg').innerText = "Network Error / Server Offline";
+                document.getElementById('errorMsg').innerText = "Server Connection Error";
                 errorBox.style.display = 'block';
             }
         });
@@ -366,7 +414,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# --- BACKEND LOGIC (NO CHANGES) ---
+# --- BACKEND LOGIC (UNCHANGED - 100% WORKING) ---
 def process_data(user_input):
     base_url = "http://180.92.235.190:8022/erp"
     
@@ -438,7 +486,7 @@ def process_data(user_input):
                 'cutNo': get_val(r"name=\"cutNo\[\]\".*?value=\"([^\"]+)\"", r), 'isRescan': get_val(r"name=\"isRescan\[\]\".*?value=\"(\d+)\"", r)
             })
 
-        # 5. Save (UTC+6 / BD Time Fix)
+        # 5. Save (UTC+6 Bangladesh Time)
         # ---------------------------------------------
         bd_zone = timezone(timedelta(hours=6))
         now_bd = datetime.now(bd_zone)
