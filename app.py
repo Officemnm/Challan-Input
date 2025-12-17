@@ -2,14 +2,14 @@ from flask import Flask, request, jsonify, render_template_string
 import requests
 import re
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone # Timezone added
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- ULTRA MODERN PRO DARK UI TEMPLATE ---
+# --- ULTRA MODERN DARK UI TEMPLATE (New Design) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -49,12 +49,6 @@ HTML_TEMPLATE = """
             color: var(--text-main);
         }
 
-        .main-container {
-            width: 100%;
-            max-width: 400px;
-            perspective: 1000px;
-        }
-
         .glass-card {
             background: var(--card-bg);
             backdrop-filter: blur(24px);
@@ -63,14 +57,15 @@ HTML_TEMPLATE = """
             border-radius: 24px;
             padding: 2rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s ease;
         }
 
         .brand-header {
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 2rem;
         }
 
         .brand-icon {
@@ -87,20 +82,6 @@ HTML_TEMPLATE = """
             color: white;
         }
 
-        .brand-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #fff, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .input-wrapper {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
         .custom-input {
             width: 100%;
             background: rgba(15, 23, 42, 0.6);
@@ -111,20 +92,13 @@ HTML_TEMPLATE = """
             font-weight: 600;
             color: white;
             text-align: center;
-            transition: all 0.3s ease;
             outline: none;
+            transition: 0.3s;
         }
 
         .custom-input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .custom-input::placeholder {
-            color: var(--text-muted);
-            font-weight: 400;
-            font-size: 1rem;
         }
 
         .btn-submit {
@@ -136,174 +110,88 @@ HTML_TEMPLATE = """
             color: white;
             font-weight: 600;
             font-size: 1rem;
+            margin-top: 15px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
         }
 
-        .btn-submit:active {
-            transform: scale(0.98);
-        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
 
-        /* Result States */
-        .result-state {
+        .result-box {
             display: none;
-            text-align: center;
-            animation: fadeIn 0.4s ease;
-            background: rgba(15, 23, 42, 0.4);
+            margin-top: 25px;
             padding: 20px;
             border-radius: 16px;
-            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.4);
             border: 1px solid var(--border);
-        }
-
-        .icon-box {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 1.5rem;
-        }
-
-        .success-state .icon-box { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .error-state .icon-box { background: rgba(239, 68, 68, 0.1); color: var(--error); }
-
-        .result-info {
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px;
-            padding: 10px;
-            margin: 15px 0;
-            font-family: monospace;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
+            text-align: center;
         }
 
         .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-main);
+            display: block;
+            width: 100%;
             padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: 12px;
-            font-size: 0.85rem;
+            color: white;
             text-decoration: none;
-            display: flex; flex-direction: column; align-items: center; gap: 5px;
-            transition: 0.2s;
+            margin-top: 10px;
+            transition: 0.3s;
+            font-size: 0.9rem;
         }
-        
-        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: var(--text-muted); }
-        .btn-outline i { font-size: 1.1rem; color: var(--primary); }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: white; }
 
-        /* Loader */
-        .loader-container {
-            position: absolute; inset: 0;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(5px);
-            z-index: 10;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 24px;
+        .loader {
+            position: absolute; inset: 0; background: rgba(15,23,42,0.9);
+            display: none; align-items: center; justify-content: center; flex-direction: column;
+            border-radius: 24px; z-index: 10;
         }
-        
         .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid rgba(59, 130, 246, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--primary);
+            width: 40px; height: 40px; border: 3px solid rgba(59,130,246,0.3);
+            border-top: 3px solid var(--primary); border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
-        .footer-text {
-            text-align: center;
-            margin-top: 20px;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            opacity: 0.6;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div class="glass-card">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div style="margin-top: 15px; letter-spacing: 1px; font-size: 0.8rem;">PROCESSING...</div>
+        </div>
 
-    <div class="main-container">
-        <div class="glass-card">
+        <div class="brand-header">
+            <div class="brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <h4 style="font-weight: 700;">SEWING INPUT</h4>
+        </div>
+
+        <form id="mainForm">
+            <input type="number" inputmode="numeric" id="challanNo" class="custom-input" placeholder="Enter Challan" required autocomplete="off">
+            <button type="submit" class="btn-submit">SUBMIT DATA</button>
+        </form>
+
+        <div id="successBox" class="result-box">
+            <i class="fa-solid fa-circle-check fa-3x text-success mb-3"></i>
+            <h5>Input Successful</h5>
+            <div id="successChallan" class="text-muted small mb-3">--</div>
             
-            <div class="loader-container" id="loader">
-                <div class="spinner"></div>
-                <div style="margin-top: 15px; font-size: 0.9rem; letter-spacing: 1px;">PROCESSING</div>
-            </div>
-
-            <div class="brand-header">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-layer-group"></i>
-                </div>
-                <div class="brand-title">SEWING INPUT PORTAL</div>
-                <div style="font-size: 0.8rem; color: var(--primary); margin-top: 5px;">Secure Production System</div>
-            </div>
-
-            <form id="mainForm">
-                <div class="input-wrapper">
-                    <input type="number" inputmode="numeric" id="challanNo" class="custom-input" placeholder="Enter Challan No" required autocomplete="off">
-                </div>
-                
-                <button type="submit" class="btn-submit">
-                    SUBMIT DATA <i class="fa-solid fa-arrow-right ms-2"></i>
-                </button>
-            </form>
-
-            <div id="successBox" class="result-state success-state">
-                <div class="icon-box"><i class="fa-solid fa-check"></i></div>
-                <h5 style="margin: 0; font-weight: 700;">Input Successful</h5>
-                
-                <div class="result-info">
-                    <div id="successChallan" style="color: #fff; font-weight: bold;">--</div>
-                    <div id="sysId" style="font-size: 0.8em;">SYS ID: --</div>
-                </div>
-
-                <div class="action-grid">
-                    <a href="#" id="link1" target="_blank" class="btn-outline">
-                        <i class="fa-solid fa-print"></i> <span>Barcode</span>
-                    </a>
-                    <a href="#" id="link2" target="_blank" class="btn-outline">
-                        <i class="fa-solid fa-file-invoice"></i> <span>Challan</span>
-                    </a>
-                </div>
-
-                <div style="margin-top: 15px;">
-                    <button onclick="resetUI()" class="btn btn-sm btn-dark w-100" style="border: 1px solid var(--border); border-radius: 10px;">
-                        Input Another
-                    </button>
-                </div>
-            </div>
-
-            <div id="errorBox" class="result-state error-state">
-                <div class="icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <h5 style="color: var(--error);">Input Failed</h5>
-                <p class="small text-muted mt-2 mb-3" id="errorMsg">Unknown Error</p>
-                <button onclick="resetUI()" class="btn-outline w-100" style="color: #fff; border-color: rgba(255,255,255,0.2);">
-                    Try Again
-                </button>
-            </div>
-
+            <a href="#" id="link1" target="_blank" class="btn-outline"><i class="fa-solid fa-print me-2"></i> Print Barcode</a>
+            <a href="#" id="link2" target="_blank" class="btn-outline"><i class="fa-solid fa-file-invoice me-2"></i> Print Challan</a>
+            
+            <button onclick="resetUI()" class="btn-outline" style="border-color: var(--primary); color: var(--primary); margin-top: 20px;">
+                <i class="fa-solid fa-rotate-right me-2"></i> Input Another
+            </button>
         </div>
-        
-        <div class="footer-text">
-            &copy; 2025 MnM Software Solutions v2.4
+
+        <div id="errorBox" class="result-box">
+            <i class="fa-solid fa-triangle-exclamation fa-3x text-danger mb-3"></i>
+            <h5 class="text-danger">Failed</h5>
+            <p id="errorMsg" class="small text-muted">Unknown Error</p>
+            <button onclick="resetUI()" class="btn-outline">Try Again</button>
         </div>
+
+        <div class="text-center mt-4 opacity-50 small">Secure Server v2.4 (BD Time)</div>
     </div>
 
     <script>
@@ -315,11 +203,8 @@ HTML_TEMPLATE = """
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const val = input.value;
-            if(!val) return;
-
-            // UI Loading State
-            input.blur(); // Hide mobile keyboard
+            if(!input.value) return;
+            input.blur();
             loader.style.display = 'flex';
             successBox.style.display = 'none';
             errorBox.style.display = 'none';
@@ -328,27 +213,23 @@ HTML_TEMPLATE = """
                 const req = await fetch('/process', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({challan: val})
+                    body: JSON.stringify({challan: input.value})
                 });
                 const res = await req.json();
-
                 loader.style.display = 'none';
 
                 if(res.status === 'success') {
-                    document.getElementById('successChallan').innerText = res.challan_no;
-                    document.getElementById('sysId').innerText = "SYS ID: " + res.system_id;
+                    document.getElementById('successChallan').innerText = res.challan_no + ' (' + res.system_id + ')';
                     document.getElementById('link1').href = res.report1_url;
                     document.getElementById('link2').href = res.report2_url;
-                    
                     successBox.style.display = 'block';
                 } else {
                     document.getElementById('errorMsg').innerText = res.message;
                     errorBox.style.display = 'block';
                 }
-
             } catch (err) {
                 loader.style.display = 'none';
-                document.getElementById('errorMsg').innerText = "Connection Error. Check Internet.";
+                document.getElementById('errorMsg').innerText = "Network Error";
                 errorBox.style.display = 'block';
             }
         });
@@ -364,7 +245,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# --- BACKEND LOGIC ---
+# --- BACKEND LOGIC (RESTORED TO ORIGINAL + TIME FIX) ---
 def process_data(user_input):
     base_url = "http://180.92.235.190:8022/erp"
     
@@ -384,7 +265,15 @@ def process_data(user_input):
         # 1. Login
         session.post(f"{base_url}/login.php", data={'txt_userid': 'input1.clothing-cutting', 'txt_password': '123456', 'submit': 'Login'}, headers=headers_common)
 
-        # 2. Logic Selection
+        # 2. Session Activate
+        headers_menu = headers_common.copy()
+        headers_menu['Referer'] = f"{base_url}/production/bundle_wise_sewing_input.php?permission=1_1_2_1"
+        try:
+            session.get(f"{base_url}/tools/valid_user_action.php?menuid=724", headers=headers_menu)
+            session.get(f"{base_url}/includes/common_functions_for_js.php?data=724_7_406&action=create_menu_session", headers=headers_menu)
+        except: pass
+
+        # 3. Logic
         cbo_logic = '1'
         if user_input.startswith('4'): cbo_logic = '4'
         elif user_input.startswith('3'): cbo_logic = '2'
@@ -394,13 +283,12 @@ def process_data(user_input):
         headers_ajax['X-Requested-With'] = 'XMLHttpRequest'
         if 'Content-Type' in headers_ajax: del headers_ajax['Content-Type']
 
-        # 3. Search for System ID
+        # 4. Search
         res = session.get(ctrl_url, params={'data': f"{user_input}_0__{cbo_logic}_2__1_", 'action': 'create_challan_search_list_view'}, headers=headers_ajax)
         mid = re.search(r"js_set_value\((\d+)\)", res.text)
-        if not mid: return {"status": "error", "message": "❌ Invalid Challan / No Data Found"}
+        if not mid: return {"status": "error", "message": "❌ Invalid Challan / No Data"}
         sys_id = mid.group(1)
 
-        # 4. Populate Data
         res_pop = session.post(ctrl_url, params={'data': sys_id, 'action': 'populate_data_from_challan_popup'}, data={'rndval': int(time.time()*1000)}, headers=headers_common)
         
         def get_val(pat, txt, d='0'):
@@ -410,7 +298,7 @@ def process_data(user_input):
         floor = get_val(r"\$\('#cbo_floor'\)\.val\('([^']*)'\)", res_pop.text)
         line = get_val(r"\$\('#cbo_line_no'\)\.val\('([^']*)'\)", res_pop.text)
 
-        # 5. Fetch Bundles
+        # Bundles
         res_bun = session.get(ctrl_url, params={'data': sys_id, 'action': 'bundle_nos'}, headers=headers_ajax)
         raw_bun = res_bun.text.split("**")[0]
         if not raw_bun: return {"status": "error", "message": "❌ Empty Bundle List"}
@@ -429,14 +317,15 @@ def process_data(user_input):
                 'cutNo': get_val(r"name=\"cutNo\[\]\".*?value=\"([^\"]+)\"", r), 'isRescan': get_val(r"name=\"isRescan\[\]\".*?value=\"(\d+)\"", r)
             })
 
-        # --- TIME FIX (UTC +6 Bangladesh) ---
-        # সার্ভার টাইমের বদলে এখন বাংলাদেশ টাইম ব্যবহার হবে
-        bd_timezone = timezone(timedelta(hours=6)) 
-        now_bd = datetime.now(bd_timezone)
+        # 5. Save (With BANGLADESH Date/Time Fix)
+        # ---------------------------------------------
+        # This is the ONLY change in the backend logic
+        bd_zone = timezone(timedelta(hours=6))
+        now_bd = datetime.now(bd_zone)
         
-        fmt_date = now_bd.strftime("%d-%b-%Y") # e.g. 17-Dec-2025
-        curr_time = now_bd.strftime("%H:%M")   # e.g. 14:30 (24H Format)
-        # ------------------------------------
+        fmt_date = now_bd.strftime("%d-%b-%Y") # e.g., 17-Dec-2025
+        curr_time = now_bd.strftime("%H:%M")   # e.g., 14:30 (24H)
+        # ---------------------------------------------
 
         payload = {
             'action': 'save_update_delete', 'operation': '0', 'tot_row': str(len(b_data)),
@@ -444,8 +333,7 @@ def process_data(user_input):
             'cbo_source': "'1'", 'cbo_emb_company': "'2'", 'cbo_location': "'2'", 'cbo_floor': f"'{floor}'",
             'txt_issue_date': f"'{fmt_date}'", 'txt_organic': "''", 'txt_system_id': "''", 'delivery_basis': "'3'",
             'txt_challan_no': "''", 'cbo_line_no': f"'{line}'", 'cbo_shift_name': "'0'",
-            'cbo_working_company_name': "'0'", 'cbo_working_location': "'0'", 'txt_remarks': "''", 
-            'txt_reporting_hour': f"'{curr_time}'"  # 24H format injected here
+            'cbo_working_company_name': "'0'", 'cbo_working_location': "'0'", 'txt_remarks': "''", 'txt_reporting_hour': f"'{curr_time}'"
         }
 
         for i, b in enumerate(b_data, 1):
@@ -470,6 +358,7 @@ def process_data(user_input):
                 new_sys_id = parts[1]
                 new_challan = parts[2] if len(parts) > 2 else "Sewing Challan"
                 
+                # Report Links
                 u1 = f"{base_url}/production/requires/bundle_wise_sewing_input_controller.php?data=1*{new_sys_id}*{cbo_logic}*%E2%9D%8F%20Bundle%20Wise%20Sewing%20Input*1*undefined*undefined*undefined&action=emblishment_issue_print_13"
                 u2 = f"{base_url}/production/requires/bundle_wise_sewing_input_controller.php?data=1*{new_sys_id}*{cbo_logic}*%E2%9D%8F%20Bundle%20Wise%20Sewing%20Input*undefined*undefined*undefined*1&action=sewing_input_challan_print_5"
 
@@ -481,8 +370,8 @@ def process_data(user_input):
                     "report2_url": u2
                 }
             
-            elif code == "20": return {"status": "error", "message": "⚠️ এই বান্ডিলগুলো আগেই ইনপুট নেওয়া হয়েছে!"}
-            elif code == "10": return {"status": "error", "message": "❌ Validation Error (Allocation Check)"}
+            elif code == "20": return {"status": "error", "message": "❌ সার্ভার সমস্যা / বান্ডিল অলরেডি পান্স করা হয়েছে!"}
+            elif code == "10": return {"status": "error", "message": "❌ Validation Error (10). Check Allocation."}
             else: return {"status": "error", "message": f"Server Error Code: {code}"}
         
         return {"status": "error", "message": f"Save Failed: {save_res.status_code}"}
