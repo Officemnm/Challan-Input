@@ -186,7 +186,9 @@ HTML_TEMPLATE = """
 
             try {
                 const req = await fetch('/process', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({challan: val})
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({challan: val})
                 });
                 const res = await req.json();
                 loader.style.display = 'none';
@@ -220,11 +222,13 @@ HTML_TEMPLATE = """
 """
 
 # --- BACKEND LOGIC ---
-def process_data(user_input):
+# 🔥 NEW: Receives 'client_ua' to set dynamic User-Agent
+def process_data(user_input, client_ua):
     base_url = "http://180.92.235.190:8022/erp"
     
+    # 🟢 Set User-Agent from the Client's Device
     headers_common = {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36',
+        'User-Agent': client_ua if client_ua else 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36',
         'Content-Type': 'application/x-www-form-urlencoded',
         'Origin': 'http://180.92.235.190:8022',
         'Referer': f"{base_url}/login.php"
@@ -388,13 +392,19 @@ def process_data(user_input):
 
 # --- ROUTES ---
 @app.route('/')
-def index(): return render_template_string(HTML_TEMPLATE)
+def index():
+    return render_template_string(HTML_TEMPLATE)
 
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json
     if not data or 'challan' not in data: return jsonify({"status": "error", "message": "No Data"})
-    return jsonify(process_data(data['challan']))
+    
+    # 🟢 Get Client User Agent
+    client_ua = request.headers.get('User-Agent')
+    
+    # Pass it to the function
+    return jsonify(process_data(data['challan'], client_ua))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
