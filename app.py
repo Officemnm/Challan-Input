@@ -476,17 +476,19 @@ def process_data(user_input):
         location = get_val(r"\$\('#cbo_location'\)\.val\('([^']*)'\)", res_pop.text)
         floor = get_val(r"\$\('#cbo_floor'\)\.val\('([^']*)'\)", res_pop.text)
 
-        # CHECK FOR EMPTY VALUES (Empty string is bad, '0' is okay)
+        # CHECK FOR EMPTY VALUES OR '0' (Strict Validation)
         missing_fields = []
-        if source == '': missing_fields.append("Source")
-        if emb_company == '': missing_fields.append("Emb Company")
-        if line == '': missing_fields.append("Line No")
-        if location == '': missing_fields.append("Location")
+        
+        # Logic: If value is Empty ('') OR value is '0', add to missing list
+        if source == '' or source == '0': missing_fields.append("Source")
+        if emb_company == '' or emb_company == '0': missing_fields.append("Emb Company")
+        if line == '' or line == '0': missing_fields.append("Line No")
+        if location == '' or location == '0': missing_fields.append("Location")
 
         if missing_fields:
             return {
                 "status": "error", 
-                "message": f"⚠️ Missing: {', '.join(missing_fields)}. Please Select them."
+                "message": f"⚠️ Please Select: {', '.join(missing_fields)}"
             }
         # =========================================================================
 
