@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, render_template_string
 import requests
 import re
@@ -9,7 +10,7 @@ from urllib3.util.retry import Retry
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- MNM SOFTWARE DESIGN (Glassmorphism UI) ---
+# --- MNM SOFTWARE DESIGN (Original Glassmorphism UI) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -36,15 +37,11 @@ HTML_TEMPLATE = """
             --gradient-card: linear-gradient(145deg, rgba(22, 22, 31, 0.9) 0%, rgba(16, 16, 22, 0.95) 100%);
             --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-
         body {
             background: var(--bg-body); color: var(--text-primary); min-height: 100vh;
             display: flex; justify-content: center; align-items: center; overflow-x: hidden; position: relative;
         }
-
-        /* Animated Background Orbs */
         .bg-orb {
             position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4;
             animation: orbFloat 20s ease-in-out infinite; pointer-events: none; z-index: 0;
@@ -56,8 +53,6 @@ HTML_TEMPLATE = """
             0%, 100% { transform: translate(0, 0) scale(1); }
             50% { transform: translate(-20px, 20px) scale(0.95); }
         }
-
-        /* Main Card */
         .main-container { position: relative; z-index: 10; width: 100%; max-width: 440px; padding: 20px; }
         .glass-card {
             background: var(--gradient-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 40px 35px;
@@ -65,8 +60,6 @@ HTML_TEMPLATE = """
             animation: cardAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
         }
         @keyframes cardAppear { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-        /* UI Elements */
         .brand-section { text-align: center; margin-bottom: 35px; }
         .brand-icon {
             width: 70px; height: 70px; background: var(--gradient-orange); border-radius: 18px;
@@ -74,32 +67,26 @@ HTML_TEMPLATE = """
             margin-bottom: 18px; box-shadow: 0 15px 40px var(--accent-orange-glow); animation: iconPulse 3s ease-in-out infinite;
         }
         @keyframes iconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        
         .brand-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
         .brand-title span { background: var(--gradient-orange); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .brand-subtitle { color: var(--text-secondary); font-size: 11px; letter-spacing: 2px; margin-top: 6px; font-weight: 600; text-transform: uppercase; }
-
         .form-control-custom {
             width: 100%; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
             border-radius: 16px; color: white; font-size: 18px; font-weight: 700; text-align: center; letter-spacing: 2px;
             outline: none; transition: var(--transition-smooth); margin-bottom: 25px;
         }
         .form-control-custom:focus { border-color: var(--accent-orange); background: rgba(255, 122, 0, 0.05); box-shadow: 0 0 0 4px var(--accent-orange-glow); }
-
         .btn-action {
             width: 100%; padding: 16px; background: var(--gradient-orange); color: white; border: none; border-radius: 16px;
             font-weight: 700; font-size: 16px; cursor: pointer; transition: var(--transition-smooth); letter-spacing: 1px; text-transform: uppercase;
         }
         .btn-action:hover { transform: translateY(-3px); box-shadow: 0 10px 30px var(--accent-orange-glow); }
-
         .result-box { display: none; margin-top: 30px; animation: slideUp 0.5s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
         .info-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; }
         .challan-text { font-size: 22px; font-weight: 800; color: white; margin-bottom: 5px; }
         .sys-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
         .status-icon-success { font-size: 40px; color: var(--accent-green); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4)); }
-
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn-outline {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); color: var(--text-secondary);
@@ -107,13 +94,10 @@ HTML_TEMPLATE = """
             align-items: center; gap: 8px; transition: var(--transition-smooth); font-weight: 600;
         }
         .btn-outline:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--text-primary); color: white; transform: translateY(-2px); }
-        .btn-outline i { font-size: 18px; color: var(--accent-orange); margin-bottom: 2px; }
-
         .error-message {
             background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #F87171;
             padding: 15px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 15px;
         }
-
         #loading-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 22, 31, 0.9);
             z-index: 100; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); border-radius: 24px;
@@ -123,7 +107,6 @@ HTML_TEMPLATE = """
             border-right: 4px solid var(--accent-orange); border-radius: 50%; animation: spin 0.8s linear infinite; box-shadow: 0 0 20px var(--accent-orange-glow);
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         .footer-credit { text-align: center; margin-top: 30px; color: var(--text-secondary); font-size: 11px; opacity: 0.6; font-weight: 500; letter-spacing: 0.5px; }
         .dev-name { color: var(--accent-orange); font-weight: 700; text-transform: uppercase; }
     </style>
@@ -222,11 +205,10 @@ HTML_TEMPLATE = """
 """
 
 # --- BACKEND LOGIC ---
-# 🔥 NEW: Receives 'client_ua' to set dynamic User-Agent
 def process_data(user_input, client_ua):
     base_url = "http://180.92.235.190:8022/erp"
     
-    # 🟢 Set User-Agent from the Client's Device
+    # User-Agent comes from Client
     headers_common = {
         'User-Agent': client_ua if client_ua else 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36',
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -269,25 +251,29 @@ def process_data(user_input, client_ua):
 
         res_pop = session.post(ctrl_url, params={'data': sys_id, 'action': 'populate_data_from_challan_popup'}, data={'rndval': int(time.time()*1000)}, headers=headers_common)
         
-        # 🟢 STRICT HELPER FUNCTION
-        def get_val(pat, txt):
-            m = re.search(pat, txt)
+        # 🔴 🔴 SUPER STRICT EXTRACTOR 🔴 🔴
+        # This regex handles: .val('0'), .val("0"), .val(0), .val(''), .val("")
+        def get_val(id_name, text):
+            # Regex: Finds ID name -> allows text until .val( -> captures content inside brackets
+            pattern = re.escape(id_name) + r".*?\.val\(\s*['\"]?([^'\")]+)['\"]?\s*\)"
+            m = re.search(pattern, text)
             if m:
-                val = m.group(1).strip() # Remove spaces
-                return val if val else '0' 
-            return '0' 
+                val = m.group(1).strip()
+                return val if val else '0' # Empty string becomes '0'
+            return '0' # Not found becomes '0'
 
         # =========================================================================
-        # 🔥 EXTRACTING & VALIDATING DATA (STRICT MODE) 🔥
+        # 🔥 FINAL STRICT VALIDATION 🔥
         # =========================================================================
         
-        source = get_val(r"\$\('#cbo_source'\)\.val\('([^']*)'\)", res_pop.text)
-        emb_company = get_val(r"\$\('#cbo_emb_company'\)\.val\('([^']*)'\)", res_pop.text)
-        line = get_val(r"\$\('#cbo_line_no'\)\.val\('([^']*)'\)", res_pop.text)
-        location = get_val(r"\$\('#cbo_location'\)\.val\('([^']*)'\)", res_pop.text)
-        floor = get_val(r"\$\('#cbo_floor'\)\.val\('([^']*)'\)", res_pop.text)
+        source = get_val("cbo_source", res_pop.text)
+        emb_company = get_val("cbo_emb_company", res_pop.text)
+        line = get_val("cbo_line_no", res_pop.text)
+        location = get_val("cbo_location", res_pop.text)
+        floor = get_val("cbo_floor", res_pop.text)
 
-        # Forbidden values
+        # STRICT FORBIDDEN LIST:
+        # Blocks: '0', '00', '', 'undefined', 'null'
         forbidden = ['0', '00', '', 'undefined', 'null']
 
         missing_fields = []
@@ -297,9 +283,10 @@ def process_data(user_input, client_ua):
         if location in forbidden: missing_fields.append("Location")
         
         if missing_fields:
+            # THIS RETURNS ERROR AND STOPS EXECUTION
             return {
                 "status": "error", 
-                "message": f"⚠️ Missing/Zero Value: {', '.join(missing_fields)}"
+                "message": f"⚠️ Missing/Zero: {', '.join(missing_fields)}"
             }
         # =========================================================================
 
@@ -333,13 +320,10 @@ def process_data(user_input, client_ua):
             })
 
         # 5. Save Payload (UTC+6 Bangladesh Time)
-        # ---------------------------------------------
         bd_zone = timezone(timedelta(hours=6))
         now_bd = datetime.now(bd_zone)
-        
-        fmt_date = now_bd.strftime("%d-%b-%Y") # e.g., 18-Dec-2025
-        curr_time = now_bd.strftime("%H:%M")   # e.g., 11:35 (24H Format)
-        # ---------------------------------------------
+        fmt_date = now_bd.strftime("%d-%b-%Y")
+        curr_time = now_bd.strftime("%H:%M")
         
         payload = {
             'action': 'save_update_delete', 'operation': '0', 'tot_row': str(len(b_data)),
@@ -354,7 +338,7 @@ def process_data(user_input, client_ua):
             'cbo_shift_name': "'0'",
             'cbo_working_company_name': "'0'", 'cbo_working_location': "'0'", 
             'txt_remarks': "''", 
-            'txt_reporting_hour': f"'{curr_time}'" # 🔥 Added BD Time here
+            'txt_reporting_hour': f"'{curr_time}'"
         }
 
         for i, b in enumerate(b_data, 1):
@@ -400,12 +384,9 @@ def process():
     data = request.json
     if not data or 'challan' not in data: return jsonify({"status": "error", "message": "No Data"})
     
-    # 🟢 Get Client User Agent
+    # Capture Dynamic User Agent
     client_ua = request.headers.get('User-Agent')
-    
-    # Pass it to the function
     return jsonify(process_data(data['challan'], client_ua))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
-
