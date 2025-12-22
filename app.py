@@ -72,7 +72,7 @@ HTML_TEMPLATE = """
         .brand-subtitle { color: var(--text-secondary); font-size: 11px; letter-spacing: 2px; margin-top: 6px; font-weight: 600; text-transform: uppercase; }
         .form-control-custom {
             width: 100%; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
-            border-radius: 16px; color: white; font-size: 18px; font-weight: 700; text-align: center; letter-spacing: 2px;
+            border-radius: 16px; color: white; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 2px;
             outline: none; transition: var(--transition-smooth); margin-bottom: 25px;
         }
         .form-control-custom:focus { border-color: var(--accent-orange); background: rgba(255, 122, 0, 0.05); box-shadow: 0 0 0 4px var(--accent-orange-glow); }
@@ -390,3 +390,4 @@ def process():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
+
